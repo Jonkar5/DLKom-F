@@ -1,0 +1,58 @@
+
+import React from 'react';
+import { 
+  Users, 
+  Truck, 
+  FileText, 
+  Plus, 
+  ChevronRight, 
+  ArrowLeft,
+  Calendar,
+  CreditCard,
+  Trash2,
+  Save,
+  CheckCircle,
+  Circle,
+  Wallet,
+  BarChart3,
+  Cloud,
+  RefreshCw,
+  FilePlus,
+  Home,
+  Briefcase,
+  UserPlus,
+  Paperclip,
+  Download,
+  AlertTriangle,
+  X,
+  Pencil
+} from 'lucide-react';
+
+// Exporting specific icons for usage across the app
+export { 
+  Users, 
+  Truck, 
+  FileText, 
+  Plus, 
+  ChevronRight, 
+  ArrowLeft,
+  Calendar,
+  CreditCard,
+  Trash2,
+  Save,
+  CheckCircle,
+  Circle,
+  Wallet,
+  BarChart3,
+  Cloud,
+  RefreshCw,
+  FilePlus,
+  Home,
+  Briefcase,
+  UserPlus,
+  Paperclip,
+  Download,
+  AlertTriangle,
+  X,
+  Pencil
+};
