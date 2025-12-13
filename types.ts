@@ -55,4 +55,6 @@ export interface AppState {
   tempInvoiceType?: EntityType; 
   // Pre-selected entity when creating invoice from list view
   tempTargetEntityId?: string;
+  // ID of the invoice currently being edited
+  activeInvoiceId?: string | null;
 }
