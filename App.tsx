@@ -4,7 +4,7 @@ import {
   Truck, 
   Plus, 
   ChevronRight, 
-  ArrowLeft,
+  ArrowLeft, 
   Calendar,
   Wallet,
   CheckCircle,
@@ -39,8 +39,8 @@ import {
 import { EntityForm } from './components/EntityForm';
 import { InvoiceForm } from './components/InvoiceForm';
 
-// Force new version key
-const APP_VERSION = "3.4";
+// Force new version key for GitHub release
+const APP_VERSION = "3.5";
 
 function App() {
   // Key state to force re-render on version change if needed
@@ -303,7 +303,7 @@ function App() {
              </div>
              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
              <div>
-                <h1 className="text-2xl font-bold text-slate-800">DLKom</h1>
+                <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">DLKom <span className="w-2 h-2 rounded-full bg-blue-500"></span></h1>
                 <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Facturación</p>
              </div>
           </div>
@@ -422,139 +422,6 @@ function App() {
     );
   };
 
-  const renderEntityList = (type: EntityType) => {
-    const isClient = type === EntityType.CLIENT;
-    const title = isClient ? 'Clientes' : 'Proveedores';
-    const filtered = entities.filter(e => e.type === type);
-
-    return (
-      <div className="flex flex-col h-full bg-slate-50">
-        {renderHeader(title, 
-           <button onClick={() => goToAddEntity(type)} className={`p-2 rounded-2xl ${isClient ? 'bg-violet-100 text-violet-600' : 'bg-amber-100 text-amber-600'} shadow-sm active:scale-95 transition-transform`}><Plus size={24} /></button>
-        )}
-        
-        <div className="bg-white px-4 py-3 border-b border-slate-100">
-             <div className="relative">
-                <select
-                  className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-                  onChange={(e) => {
-                    if (e.target.value) goToDetails(e.target.value);
-                  }}
-                  value=""
-                >
-                  <option value="" disabled>Ir a ficha de {isClient ? 'cliente' : 'proveedor'}...</option>
-                  {filtered.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <div className="absolute left-3 top-3.5 text-slate-400 pointer-events-none"><Users size={18} /></div>
-             </div>
-        </div>
-
-        <div className="p-4 space-y-3 pb-32">
-          {filtered.length === 0 ? (
-            <div className="text-center py-20 text-slate-400">
-              <p>No hay {isClient ? 'clientes' : 'proveedores'}.</p>
-            </div>
-          ) : (
-            filtered.map(entity => (
-              <div key={entity.id} onClick={() => goToDetails(entity.id)} className="bg-white p-4 rounded-[24px] shadow-sm border border-slate-100 flex items-center justify-between active:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-[18px] flex items-center justify-center ${isClient ? 'bg-violet-50 text-violet-500' : 'bg-amber-50 text-amber-500'}`}>{isClient ? <Users size={20} /> : <Truck size={20} />}</div>
-                  <div><h3 className="font-bold text-slate-800 text-lg">{entity.name}</h3><div className="flex gap-2 text-sm text-slate-500">{entity.phone && <span>{entity.phone}</span>}</div></div>
-                </div>
-                <ChevronRight className="text-slate-300" />
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderPayments = (type: EntityType) => {
-    const isClient = type === EntityType.CLIENT;
-    const title = isClient ? 'Cobros' : 'Pagos';
-    const themeColor = isClient ? 'text-indigo-600' : 'text-emerald-600';
-    
-    const relevantEntities = entities.filter(e => e.type === type);
-    const relevantEntityIds = new Set(relevantEntities.map(e => e.id));
-    const typeInvoices = invoices.filter(inv => relevantEntityIds.has(inv.entityId));
-    
-    const pendingList: any[] = [];
-    typeInvoices.forEach(inv => {
-      inv.maturities.forEach(mat => {
-        if (!mat.paid) {
-          const entity = entities.find(e => e.id === inv.entityId);
-          pendingList.push({ invId: inv.id, invNumber: inv.number, entityName: entity?.name, maturity: mat });
-        }
-      });
-    });
-
-    pendingList.sort((a, b) => new Date(a.maturity.date).getTime() - new Date(b.maturity.date).getTime());
-
-    return (
-      <div className="flex flex-col h-full bg-slate-50">
-        {renderHeader(title)}
-        <div className="p-4 space-y-3 pb-32">
-          {pendingList.length === 0 ? (
-             <div className="text-center py-20 text-slate-400"><CheckCircle size={48} className="mx-auto mb-4 text-slate-300" /><p>¡Todo al día!</p></div>
-          ) : (
-            pendingList.map((item) => (
-              <div key={item.maturity.id} onClick={() => goToDetails(typeInvoices.find(i => i.id === item.invId)?.entityId || '')} className="bg-white p-4 rounded-[24px] shadow-sm border border-slate-100 active:bg-slate-50">
-                <div className="flex justify-between items-start mb-2">
-                  <div><span className="text-sm font-bold text-slate-800 block">{item.entityName}</span><span className="text-xs text-slate-500">Factura {item.invNumber}</span></div>
-                  <span className={`font-bold ${themeColor}`}>{item.maturity.amount.toFixed(2)} €</span>
-                </div>
-                <div className="flex justify-between items-center text-xs text-slate-500 bg-slate-50 p-2 rounded-lg"><span>Vence: {item.maturity.date.split('-').reverse().join('/')}</span><span className="text-orange-500 font-medium">Pendiente</span></div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderReports = () => {
-    const clientInvoices = invoices.filter(i => entities.find(ent => ent.id === i.entityId)?.type === EntityType.CLIENT);
-    const supplierInvoices = invoices.filter(i => entities.find(ent => ent.id === i.entityId)?.type === EntityType.SUPPLIER);
-    const totalBilled = clientInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
-    const totalExpenses = supplierInvoices.reduce((sum, i) => sum + i.totalAmount, 0);
-    let pendingCollection = 0; clientInvoices.forEach(inv => inv.maturities.forEach(m => { if (!m.paid) pendingCollection += m.amount; }));
-    let pendingPayment = 0; supplierInvoices.forEach(inv => inv.maturities.forEach(m => { if (!m.paid) pendingPayment += m.amount; }));
-
-    return (
-      <div className="flex flex-col h-full bg-slate-50">
-        <div className="sticky top-0 bg-white/95 backdrop-blur-md z-20 px-4 py-3 shadow-sm border-b border-slate-100 flex items-center gap-2">
-           <button onClick={() => switchTab('HOME')} className="p-2 -ml-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-2xl transition-colors active:scale-95"><ArrowLeft size={24} /></button>
-           <h2 className="text-xl font-bold text-slate-800">Informes</h2>
-        </div>
-        <div className="p-4 space-y-4 pb-32">
-           <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
-             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Resumen Global</h3>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 rounded-[20px]"><p className="text-xs text-blue-500 mb-1">Total Facturado</p><p className="text-2xl font-bold text-blue-700">{totalBilled.toFixed(0)} €</p></div>
-                <div className="p-4 bg-rose-50 rounded-[20px]"><p className="text-xs text-rose-500 mb-1">Total Gastos</p><p className="text-2xl font-bold text-rose-700">{totalExpenses.toFixed(0)} €</p></div>
-             </div>
-           </div>
-           <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
-             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Estado de Tesorería</h3>
-             <div className="space-y-4">
-                <div>
-                   <div className="flex justify-between items-end mb-1"><span className="text-sm text-slate-600">Pendiente de Cobro</span><span className="font-bold text-indigo-500">{pendingCollection.toFixed(0)} €</span></div>
-                   <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-indigo-400 h-2 rounded-full" style={{ width: `${Math.min((pendingCollection / (totalBilled || 1)) * 100, 100)}%` }}></div></div>
-                </div>
-                <div>
-                   <div className="flex justify-between items-end mb-1"><span className="text-sm text-slate-600">Pendiente de Pago</span><span className="font-bold text-emerald-500">{pendingPayment.toFixed(0)} €</span></div>
-                   <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-emerald-400 h-2 rounded-full" style={{ width: `${Math.min((pendingPayment / (totalExpenses || 1)) * 100, 100)}%` }}></div></div>
-                </div>
-             </div>
-           </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderDetails = () => {
     if (!state.activeEntityId) return null;
     const entity = entities.find(e => e.id === state.activeEntityId);
@@ -599,7 +466,7 @@ function App() {
                          <div>
                             <div className="flex items-center gap-2 mb-1">
                                <span className="font-bold text-slate-700 text-lg">{inv.number}</span>
-                               {inv.pdfData && (<button onClick={(e) => { e.stopPropagation(); downloadPdf(inv.pdfData!, `factura-${inv.number}.pdf`); }} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 ml-1" title="Descargar PDF"><Download size={14} /><span className="text-[10px] font-bold tracking-wide">PDF</span></button>)}
+                               {inv.pdfData && (<button onClick={(e) => { e.stopPropagation(); downloadPdf(inv.pdfData!, `factura-${inv.number}.pdf`); }} className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 hover:scale-105 active:scale-95 transition-all shadow-sm border border-red-100 ml-2" title="Descargar PDF"><Download size={16} /><span className="text-xs font-bold tracking-wide">PDF</span></button>)}
                                <button onClick={() => goToEditInvoice(inv)} className="text-slate-400 hover:text-blue-500 p-1.5 transition-colors"><Pencil size={16} /></button>
                                <button onClick={() => confirmDelete('INVOICE', inv.id)} className="text-slate-400 hover:text-red-400 p-1.5 transition-colors"><Trash2 size={16} /></button>
                             </div>
@@ -631,6 +498,206 @@ function App() {
       </div>
     );
   };
+
+  const renderEntityList = (type: EntityType) => {
+    const isClient = type === EntityType.CLIENT;
+    const title = isClient ? 'Clientes' : 'Proveedores';
+    
+    const filteredEntities = entities.filter(e => e.type === type)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return (
+      <div className="flex flex-col h-full bg-slate-50">
+        {renderHeader(title, 
+            <button onClick={() => goToAddEntity(type)} className="p-2 rounded-2xl bg-slate-900 text-white shadow-sm active:scale-95 transition-all">
+                <Plus size={24} />
+            </button>
+        )}
+        <div className="p-4 space-y-3 pb-32 overflow-y-auto">
+          {filteredEntities.length === 0 ? (
+             <div className="text-center py-20 text-slate-400"><p>No hay {title.toLowerCase()} registrados.</p></div>
+          ) : (
+             filteredEntities.map(entity => (
+               <div key={entity.id} onClick={() => goToDetails(entity.id)} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between active:scale-95 transition-transform cursor-pointer">
+                  <div className="flex items-center gap-4">
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isClient ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-500'}`}>
+                        {isClient ? <Users size={20} /> : <Truck size={20} />}
+                     </div>
+                     <div>
+                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{entity.name}</h3>
+                        <p className="text-xs text-slate-500 font-medium">{entity.contactPerson || entity.email || entity.phone || 'Sin datos de contacto'}</p>
+                     </div>
+                  </div>
+                  <ChevronRight size={20} className="text-slate-300" />
+               </div>
+             ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPayments = (type: EntityType) => {
+      const isClient = type === EntityType.CLIENT;
+      const title = isClient ? 'Cobros' : 'Pagos';
+      
+      const allItems: { maturity: Maturity, invoice: Invoice, entity: Entity }[] = [];
+      
+      invoices.forEach(inv => {
+          const entity = entities.find(e => e.id === inv.entityId);
+          if (entity && entity.type === type) {
+              inv.maturities.forEach(m => {
+                  allItems.push({
+                      maturity: m,
+                      invoice: inv,
+                      entity: entity
+                  });
+              });
+          }
+      });
+
+      // Sort: Pending first, then by Date Ascending
+      allItems.sort((a, b) => {
+          if (a.maturity.paid === b.maturity.paid) {
+              return new Date(a.maturity.date).getTime() - new Date(b.maturity.date).getTime();
+          }
+          return a.maturity.paid ? 1 : -1;
+      });
+
+      return (
+        <div className="flex flex-col h-full bg-slate-50">
+           {renderHeader(title)}
+           <div className="p-4 space-y-3 pb-32 overflow-y-auto">
+              {allItems.length === 0 ? (
+                  <div className="text-center py-20 text-slate-400"><p>No hay registros.</p></div>
+              ) : (
+                  allItems.map(({ maturity: m, invoice, entity }) => {
+                      const isOverdue = !m.paid && new Date(m.date) < new Date();
+                      return (
+                      <div key={m.id} className={`bg-white p-4 rounded-2xl shadow-sm border flex items-center gap-3 ${isOverdue ? 'border-red-200 bg-red-50/30' : 'border-slate-100'}`}>
+                          <button onClick={() => handleMaturityClick(invoice, m)} className={`shrink-0 transition-colors ${m.paid ? 'text-green-500' : 'text-slate-300 hover:text-slate-400'}`}>
+                              {m.paid ? <CheckCircle size={28} /> : <Circle size={28} />}
+                          </button>
+                          <div className="flex-1 overflow-hidden cursor-pointer" onClick={() => goToDetails(invoice.entityId)}>
+                              <div className="flex justify-between items-start mb-1">
+                                  <h4 className="font-bold text-slate-800 truncate text-sm">{entity.name}</h4>
+                                  <span className={`text-sm font-bold ${m.paid ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{m.amount.toFixed(2)} €</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-slate-500 font-medium items-center">
+                                  <div className="flex gap-2">
+                                     <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{invoice.number}</span>
+                                     {isOverdue && <span className="text-red-500 flex items-center gap-1"><AlertTriangle size={10} /> Vencido</span>}
+                                  </div>
+                                  <span className={`${isOverdue ? 'text-red-500 font-bold' : ''}`}>{m.date.split('-').reverse().join('/')}</span>
+                              </div>
+                          </div>
+                      </div>
+                  )})
+              )}
+           </div>
+        </div>
+      );
+  };
+
+  const renderReports = () => {
+      let clientTotal = 0;
+      let clientPending = 0;
+      let supplierTotal = 0;
+      let supplierPending = 0;
+
+      // Calculate totals for all time
+      invoices.forEach(inv => {
+          const entity = entities.find(e => e.id === inv.entityId);
+          if (!entity) return;
+          
+          const isClient = entity.type === EntityType.CLIENT;
+          
+          if (isClient) {
+              clientTotal += inv.totalAmount;
+              clientPending += inv.maturities.filter(m => !m.paid).reduce((sum, m) => sum + m.amount, 0);
+          } else {
+              supplierTotal += inv.totalAmount;
+              supplierPending += inv.maturities.filter(m => !m.paid).reduce((sum, m) => sum + m.amount, 0);
+          }
+      });
+      
+      const benefit = clientTotal - supplierTotal;
+      const cashFlow = (clientTotal - clientPending) - (supplierTotal - supplierPending);
+
+      return (
+          <div className="flex flex-col h-full bg-slate-50">
+              {renderHeader("Informes")}
+              <div className="p-4 space-y-4 pb-32 overflow-y-auto">
+                  
+                  {/* Global Balance Card */}
+                  <div className="bg-slate-900 text-white p-6 rounded-[32px] shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                      <div className="relative z-10">
+                        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Beneficio Neto (Facturado)</h3>
+                        <div className="flex items-baseline gap-2 mb-4">
+                            <span className="text-3xl font-bold tracking-tight">{benefit.toFixed(2)} €</span>
+                        </div>
+                        
+                        <div className="h-px bg-slate-800 w-full mb-4"></div>
+                        
+                        <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Flujo de Caja (Real)</h3>
+                        <div className="flex items-baseline gap-2">
+                            <span className={`text-2xl font-bold tracking-tight ${cashFlow >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{cashFlow.toFixed(2)} €</span>
+                        </div>
+                      </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                      {/* Clients Report */}
+                      <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex flex-col justify-between h-40">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2 text-blue-500">
+                                <Users size={20} />
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ventas</span>
+                            </div>
+                            <span className="text-xl font-bold text-slate-800">{clientTotal.toFixed(2)} €</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Pendiente de cobro</div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-orange-400 h-full" style={{ width: `${clientTotal > 0 ? (clientPending / clientTotal) * 100 : 0}%` }}></div>
+                            </div>
+                            <span className="text-xs font-bold text-orange-500 mt-1 block">{clientPending.toFixed(2)} €</span>
+                          </div>
+                      </div>
+
+                      {/* Suppliers Report */}
+                      <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 flex flex-col justify-between h-40">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2 text-rose-500">
+                                <Truck size={20} />
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Gastos</span>
+                            </div>
+                            <span className="text-xl font-bold text-slate-800">{supplierTotal.toFixed(2)} €</span>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-500 mb-1">Pendiente de pago</div>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-red-400 h-full" style={{ width: `${supplierTotal > 0 ? (supplierPending / supplierTotal) * 100 : 0}%` }}></div>
+                            </div>
+                            <span className="text-xs font-bold text-red-500 mt-1 block">{supplierPending.toFixed(2)} €</span>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  {/* Simple Help Text */}
+                  <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                      <h4 className="text-indigo-800 font-bold text-sm mb-1 flex items-center gap-2"><AlertTriangle size={16}/> Nota</h4>
+                      <p className="text-indigo-600 text-xs leading-relaxed">
+                          Estos informes se basan en todas las facturas registradas. El "Flujo de Caja" representa la diferencia real entre cobros realizados y pagos realizados.
+                      </p>
+                  </div>
+              </div>
+          </div>
+      );
+  };
+
+  const showBottomNav = state.view === 'TABS';
 
   let content;
   switch (state.view) {
@@ -700,8 +767,6 @@ function App() {
     default:
       content = renderDashboard();
   }
-
-  const showBottomNav = state.view === 'TABS';
 
   return (
     <div className="h-screen w-full bg-slate-50 flex flex-col font-sans text-slate-900 overflow-hidden relative" key={versionKey}>
